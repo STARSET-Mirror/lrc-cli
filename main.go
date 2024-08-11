@@ -14,6 +14,10 @@ func main() {
 	switch os.Args[1] {
 	case "sync":
 		syncLyrics(os.Args[2:])
+	case "convert":
+		convertLyrics(os.Args[2:])
+	case "fmt":
+		fmtLyrics(os.Args[2:])
 	case "help":
 		fmt.Println(USAGE)
 	default:

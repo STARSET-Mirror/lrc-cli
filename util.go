@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -47,6 +48,26 @@ func parseLyrics(filePath string) (Lyrics, error) {
 	}
 
 	return lyrics, nil
+}
+
+func saveLyrics(filePath string, lyrics Lyrics) error {
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Write metadata
+	for key, value := range lyrics.Metadata {
+		fmt.Fprintf(file, "[%s: %s]\n", key, value)
+	}
+
+	// Write timeline and content
+	for i := 0; i < len(lyrics.Timeline); i++ {
+		fmt.Fprintf(file, "%s %s\n", lyrics.Timeline[i], lyrics.Content[i])
+	}
+
+	return nil
 }
 
 func syncLyrics(args []string) {
@@ -110,22 +131,63 @@ func syncLyrics(args []string) {
 // 	}
 // }
 
-func saveLyrics(filePath string, lyrics Lyrics) error {
-	file, err := os.Create(filePath)
+func convertLyrics(args []string) {
+	if len(args) < 2 {
+		fmt.Println(CONVERT_USAGE)
+		return
+	}
+
+	sourceFile := args[0]
+	targetFile := args[1]
+
+	targetFmt := strings.TrimPrefix(filepath.Ext(targetFile), ".")
+
+	switch targetFmt {
+	case "txt":
+		lrcToTxt(sourceFile, targetFile)
+	default:
+		fmt.Println("Unsupported target format:", targetFmt)
+	}
+}
+
+func fmtLyrics(args []string) {
+	if len(args) < 1 {
+		fmt.Println("Usage: lyc-cli fmt <source>")
+		return
+	}
+
+	sourceFile := args[0]
+
+	sourceLyrics, err := parseLyrics(sourceFile)
 	if err != nil {
-		return err
+		fmt.Println("Error parsing source lyrics file:", err)
+		return
+	}
+
+	// save to target (source_name_fmt.lrc)
+	targetFile := strings.TrimSuffix(sourceFile, ".lrc") + "_fmt.lrc"
+	err = saveLyrics(targetFile, sourceLyrics)
+	if err != nil {
+		fmt.Println("Error saving formatted lyrics file:", err)
+		return
+	}
+}
+
+func lrcToTxt(sourceFile, targetFile string) {
+	sourceLyrics, err := parseLyrics(sourceFile)
+	if err != nil {
+		fmt.Println("Error parsing source lyrics file:", err)
+		return
+	}
+
+	file, err := os.Create(targetFile)
+	if err != nil {
+		fmt.Println("Error creating target file:", err)
+		return
 	}
 	defer file.Close()
 
-	// Write metadata
-	for key, value := range lyrics.Metadata {
-		fmt.Fprintf(file, "[%s: %s]\n", key, value)
+	for _, content := range sourceLyrics.Content {
+		fmt.Fprintln(file, content)
 	}
-
-	// Write timeline and content
-	for i := 0; i < len(lyrics.Timeline); i++ {
-		fmt.Fprintf(file, "%s %s\n", lyrics.Timeline[i], lyrics.Content[i])
-	}
-
-	return nil
 }
