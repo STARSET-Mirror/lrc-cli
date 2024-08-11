@@ -18,6 +18,8 @@ func main() {
 		convertLyrics(os.Args[2:])
 	case "fmt":
 		fmtLyrics(os.Args[2:])
+	case "version":
+		fmt.Printf("lyc-cli version %s\n", VERSION)
 	case "help":
 		fmt.Println(USAGE)
 	default:
