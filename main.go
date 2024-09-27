@@ -15,7 +15,7 @@ func main() {
 	case "sync":
 		syncLyrics(os.Args[2:])
 	case "convert":
-		convertLyrics(os.Args[2:])
+		convert(os.Args[2:])
 	case "fmt":
 		fmtLyrics(os.Args[2:])
 	case "version":

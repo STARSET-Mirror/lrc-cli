@@ -4,14 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
 func parseTimestamp(timeStr string) (Timestamp, error) {
-	// 移除方括号
+	// remove brackets
 	timeStr = strings.Trim(timeStr, "[]")
 
 	parts := strings.Split(timeStr, ":")
@@ -19,7 +18,7 @@ func parseTimestamp(timeStr string) (Timestamp, error) {
 	var err error
 
 	switch len(parts) {
-	case 2: // 分钟:秒.毫秒
+	case 2: // minutes:seconds.milliseconds
 		minutes, err = strconv.Atoi(parts[0])
 		if err != nil {
 			return Timestamp{}, err
@@ -34,7 +33,7 @@ func parseTimestamp(timeStr string) (Timestamp, error) {
 			if err != nil {
 				return Timestamp{}, err
 			}
-			// 根据毫秒的位数调整
+			// adjust milliseconds based on the number of digits
 			switch len(secParts[1]) {
 			case 1:
 				milliseconds *= 100
@@ -42,7 +41,7 @@ func parseTimestamp(timeStr string) (Timestamp, error) {
 				milliseconds *= 10
 			}
 		}
-	case 3: // 小时:分钟:秒.毫秒
+	case 3: // hours:minutes:seconds.milliseconds
 		hours, err = strconv.Atoi(parts[0])
 		if err != nil {
 			return Timestamp{}, err
@@ -61,7 +60,7 @@ func parseTimestamp(timeStr string) (Timestamp, error) {
 			if err != nil {
 				return Timestamp{}, err
 			}
-			// 根据毫秒的位数调整
+			// adjust milliseconds based on the number of digits
 			switch len(secParts[1]) {
 			case 1:
 				milliseconds *= 100
@@ -70,7 +69,7 @@ func parseTimestamp(timeStr string) (Timestamp, error) {
 			}
 		}
 	default:
-		return Timestamp{}, fmt.Errorf("无效的时间戳格式")
+		return Timestamp{}, fmt.Errorf("invalid timestamp format")
 	}
 
 	return Timestamp{Hours: hours, Minutes: minutes, Seconds: seconds, Milliseconds: milliseconds}, nil
@@ -183,22 +182,14 @@ func syncLyrics(args []string) {
 	}
 }
 
-func convertLyrics(args []string) {
-	if len(args) < 2 {
-		fmt.Println(CONVERT_USAGE)
-		return
-	}
-
-	sourceFile := args[0]
-	targetFile := args[1]
-
-	targetFmt := strings.TrimPrefix(filepath.Ext(targetFile), ".")
-
+func convertLyrics(sourceFile, targetFile, targetFmt string) {
 	switch targetFmt {
 	case "txt":
 		lrcToTxt(sourceFile, targetFile)
+	case "srt":
+		lrcToSrt(sourceFile, targetFile)
 	default:
-		fmt.Println("Unsupported target format:", targetFmt)
+		fmt.Printf("unsupported target format: %s\n", targetFmt)
 	}
 }
 
