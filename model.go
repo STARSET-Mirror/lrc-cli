@@ -21,7 +21,7 @@ type SRTEntry struct {
 }
 
 const (
-	VERSION = "0.2.0"
+	VERSION = "0.3.0"
 	USAGE   = `Usage: lyc-cli [command] [options]
   Commands:
     sync	Synchronize timeline of two lyrics files
