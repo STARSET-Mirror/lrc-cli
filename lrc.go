@@ -162,16 +162,14 @@ func syncLyrics(args []string) {
 		return
 	}
 
-	// Sync timeline
-	if len(sourceLyrics.Timeline) != len(targetLyrics.Timeline) {
-		fmt.Println("Warning: Timeline length mismatch")
-		return
-	}
 	minLength := len(sourceLyrics.Timeline)
 	if len(targetLyrics.Timeline) < minLength {
 		minLength = len(targetLyrics.Timeline)
+		fmt.Printf("Warning: Timeline length mismatch. Source: %d lines, Target: %d lines. Will sync the first %d lines.\n",
+			len(sourceLyrics.Timeline), len(targetLyrics.Timeline), minLength)
 	}
 
+	// Sync the timeline
 	for i := 0; i < minLength; i++ {
 		targetLyrics.Timeline[i] = sourceLyrics.Timeline[i]
 	}
@@ -184,23 +182,6 @@ func syncLyrics(args []string) {
 		return
 	}
 }
-
-// func printLyricsInfo(lyrics Lyrics) {
-// 	fmt.Println("Metadata:")
-// 	for key, value := range lyrics.Metadata {
-// 		fmt.Printf("%s: %s\n", key, value)
-// 	}
-
-// 	fmt.Println("\nTimeline:")
-// 	for _, time := range lyrics.Timeline {
-// 		fmt.Println(time)
-// 	}
-
-// 	fmt.Println("\nLyrics Content:")
-// 	for _, content := range lyrics.Content {
-// 		fmt.Println(content)
-// 	}
-// }
 
 func convertLyrics(args []string) {
 	if len(args) < 2 {
@@ -241,25 +222,6 @@ func fmtLyrics(args []string) {
 	if err != nil {
 		fmt.Println("Error saving formatted lyrics file:", err)
 		return
-	}
-}
-
-func lrcToTxt(sourceFile, targetFile string) {
-	sourceLyrics, err := parseLyrics(sourceFile)
-	if err != nil {
-		fmt.Println("Error parsing source lyrics file:", err)
-		return
-	}
-
-	file, err := os.Create(targetFile)
-	if err != nil {
-		fmt.Println("Error creating target file:", err)
-		return
-	}
-	defer file.Close()
-
-	for _, content := range sourceLyrics.Content {
-		fmt.Fprintln(file, content)
 	}
 }
 
