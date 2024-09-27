@@ -1,8 +1,15 @@
 package main
 
+type Timestamp struct {
+	Hours        int
+	Minutes      int
+	Seconds      int
+	Milliseconds int
+}
+
 type Lyrics struct {
 	Metadata map[string]string
-	Timeline []string
+	Timeline []Timestamp
 	Content  []string
 }
 

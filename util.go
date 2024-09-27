@@ -6,8 +6,75 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 )
+
+func parseTimestamp(timeStr string) (Timestamp, error) {
+	// 移除方括号
+	timeStr = strings.Trim(timeStr, "[]")
+
+	parts := strings.Split(timeStr, ":")
+	var hours, minutes, seconds, milliseconds int
+	var err error
+
+	switch len(parts) {
+	case 2: // 分钟:秒.毫秒
+		minutes, err = strconv.Atoi(parts[0])
+		if err != nil {
+			return Timestamp{}, err
+		}
+		secParts := strings.Split(parts[1], ".")
+		seconds, err = strconv.Atoi(secParts[0])
+		if err != nil {
+			return Timestamp{}, err
+		}
+		if len(secParts) > 1 {
+			milliseconds, err = strconv.Atoi(secParts[1])
+			if err != nil {
+				return Timestamp{}, err
+			}
+			// 根据毫秒的位数调整
+			switch len(secParts[1]) {
+			case 1:
+				milliseconds *= 100
+			case 2:
+				milliseconds *= 10
+			}
+		}
+	case 3: // 小时:分钟:秒.毫秒
+		hours, err = strconv.Atoi(parts[0])
+		if err != nil {
+			return Timestamp{}, err
+		}
+		minutes, err = strconv.Atoi(parts[1])
+		if err != nil {
+			return Timestamp{}, err
+		}
+		secParts := strings.Split(parts[2], ".")
+		seconds, err = strconv.Atoi(secParts[0])
+		if err != nil {
+			return Timestamp{}, err
+		}
+		if len(secParts) > 1 {
+			milliseconds, err = strconv.Atoi(secParts[1])
+			if err != nil {
+				return Timestamp{}, err
+			}
+			// 根据毫秒的位数调整
+			switch len(secParts[1]) {
+			case 1:
+				milliseconds *= 100
+			case 2:
+				milliseconds *= 10
+			}
+		}
+	default:
+		return Timestamp{}, fmt.Errorf("无效的时间戳格式")
+	}
+
+	return Timestamp{Hours: hours, Minutes: minutes, Seconds: seconds, Milliseconds: milliseconds}, nil
+}
 
 func parseLyrics(filePath string) (Lyrics, error) {
 	file, err := os.Open(filePath)
@@ -27,9 +94,13 @@ func parseLyrics(filePath string) (Lyrics, error) {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "[") && strings.Contains(line, "]") {
 			if timeLineRegex.MatchString(line) {
-				// Timeline Tag
-				time := timeLineRegex.FindString(line)
-				lyrics.Timeline = append(lyrics.Timeline, time)
+				// Timeline
+				timeStr := timeLineRegex.FindString(line)
+				timestamp, err := parseTimestamp(timeStr)
+				if err != nil {
+					return Lyrics{}, err
+				}
+				lyrics.Timeline = append(lyrics.Timeline, timestamp)
 				// Content
 				content := timeLineRegex.ReplaceAllString(line, "")
 				lyrics.Content = append(lyrics.Content, strings.TrimSpace(content))
@@ -64,7 +135,7 @@ func saveLyrics(filePath string, lyrics Lyrics) error {
 
 	// Write timeline and content
 	for i := 0; i < len(lyrics.Timeline); i++ {
-		fmt.Fprintf(file, "%s %s\n", lyrics.Timeline[i], lyrics.Content[i])
+		fmt.Fprintf(file, "%s %s\n", timestampToString(lyrics.Timeline[i]), lyrics.Content[i])
 	}
 
 	return nil
@@ -190,4 +261,11 @@ func lrcToTxt(sourceFile, targetFile string) {
 	for _, content := range sourceLyrics.Content {
 		fmt.Fprintln(file, content)
 	}
+}
+
+func timestampToString(ts Timestamp) string {
+	if ts.Hours > 0 {
+		return fmt.Sprintf("[%02d:%02d:%02d.%03d]", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds)
+	}
+	return fmt.Sprintf("[%02d:%02d.%03d]", ts.Minutes, ts.Seconds, ts.Milliseconds)
 }
