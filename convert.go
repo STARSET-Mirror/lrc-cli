@@ -90,6 +90,12 @@ func srtToLrc(sourceFile, targetFile string) {
 		Content:  make([]string, len(srtEntries)),
 	}
 
+	// Add default metadata
+	title := strings.TrimSuffix(filepath.Base(targetFile), filepath.Ext(targetFile))
+	lyrics.Metadata["ti"] = title
+	lyrics.Metadata["ar"] = ""
+	lyrics.Metadata["al"] = ""
+
 	for i, entry := range srtEntries {
 		lyrics.Timeline[i] = entry.StartTime
 		lyrics.Content[i] = entry.Content
